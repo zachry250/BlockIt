@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\BlockIt.Core\BlockIt.Core.csproj" />
+    <ProjectReference Include="..\BlockIt.P2PNetwork\BlockIt.P2PNetwork.csproj" />
   </ItemGroup>
 
 </Project>
