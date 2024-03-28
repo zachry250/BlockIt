@@ -6,84 +6,51 @@ using System.Xml.Linq;
 
 namespace BlockIt.P2PNetwork
 {
-    public class Client : IDisposable
+    public class Client: ITCPConnection
     {
-        private TcpClient? _tcpClient;
-        private Protocol? _protocol;
         private string? _name;
-        private int _port;
+        private readonly CancellationTokenSource _cancellationTokenSource;
+        private readonly CancellationToken _cancellationToken;
 
-        public Client(string name, int port)
+        public Client(string name)
         {
             _name = name;
-            _port = port;
+            _cancellationTokenSource = new CancellationTokenSource();
+            _cancellationToken = _cancellationTokenSource.Token;
         }
 
-        public void Dispose()
+        public async Task Connect(IPAddress ipAddress, int port, Func<Connection, Task> newConnectionCreated)
         {
-            _protocol.Dispose();
-            _tcpClient.Close();
-        }
-
-        public async Task Connect()
-        {
-            _tcpClient = new TcpClient();
+            var tcpClient = new TcpClient();
             var ipHostEntry = Dns.GetHostEntry(Dns.GetHostName());
-            var ipAddress = ipHostEntry.AddressList.First(x => x.AddressFamily == AddressFamily.InterNetwork);
-            var ipEndPoint = new IPEndPoint(ipAddress, _port);
+            var ipEndPoint = new IPEndPoint(ipAddress, port);
             Console.WriteLine($"Client will connect..");
-            await _tcpClient.ConnectAsync(ipEndPoint);
-            _protocol = new Protocol(_tcpClient.GetStream());
+            await tcpClient.ConnectAsync(ipEndPoint);
+            await AcceptConnection(tcpClient, newConnectionCreated);
         }
 
-        public async Task StartReading()
+        public void Close()
         {
-            await Task.Run(async () =>
+            _cancellationTokenSource.Cancel();
+        }
+
+        private async Task AcceptConnection(TcpClient tcpClient, Func<Connection, Task> newConnectionCreated)
+        {
+            await Task.Yield();
+            try
             {
-                List<string> messages = null;
-                do
+                using (tcpClient)
+                using (var connection = new Connection($"{_name} connection", this, new Protocol(tcpClient.GetStream())))
                 {
-                    messages = await _protocol.ReadMessages();
-                    foreach (var message in messages)
-                    {
-                        Console.WriteLine($"Client [{_name}] message received: {message}");
-                    }
+                    await newConnectionCreated(connection);
+                    connection.RegisterMessageReceiver().Wait(_cancellationToken);
                 }
-                while (messages.Count > 0 && !messages.Contains("close connection"));
-                await StartSending();
-            });
-        }
 
-        public async Task StartSending()
-        {
-            await Task.Run(async () =>
-            {
-                await SendMessage("Ok, as you will! :(");
-                await SendMessage("close connection");
-            });
-        }
-
-        private async Task SendMessage(string message)
-        {
-            await _protocol.SendMessage(message);
-
-            Console.WriteLine($"Client [{_name}] message sent: {message}");
-        }
-
-
-        /*private async Task<string> ReadMessage(NetworkStream stream)
-        {
-            string message = "";
-            var buffer = new byte[10];
-            int received = 0;
-            do
-            {
-                received = await stream.ReadAsync(buffer);
-                message += Encoding.UTF8.GetString(buffer, 0, received);
             }
-            while (received == buffer.Length);
-
-            return message;
-        }*/
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+        }
     }
 }

@@ -3,90 +3,74 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace BlockIt.P2PNetwork
 {
-    public class Server : IDisposable
+    public class Server : ITCPConnection
     {
-        private TcpListener? _tcplistener;
-        private TcpClient? _tcpclient;
-        private Protocol? _protocol;
-        private string? _name;
-        private int _port;
+        private readonly string? _name;
+        private readonly CancellationTokenSource _cancellationTokenSource;
+        private readonly CancellationToken _cancellationToken;
 
-        public Server(string name, int port)
+        public Server(string name)
         { 
             _name = name;
-            _port = port;
+            _cancellationTokenSource = new CancellationTokenSource();
+            _cancellationToken = _cancellationTokenSource.Token;
         }
 
-        public void Dispose()
+        public async Task Listen(int port, Func<Connection, Task> newConnectionCreated)
         {
-            _protocol.Dispose();
-            Console.WriteLine($"Stopping TCP listener..");
-            _tcpclient.Close();
-            _tcplistener.Stop();
-        }
-
-        public async Task Listen()
-        {
-            var ipEndPoint = new IPEndPoint(IPAddress.Any, _port);
-            _tcplistener = new TcpListener(ipEndPoint);
+            var ipEndPoint = new IPEndPoint(IPAddress.Any, port);
+            var tcplistener = new TcpListener(ipEndPoint);
 
             Console.WriteLine($"Started TCP listener..");
-            _tcplistener.Start();
+            tcplistener.Start();
+            TcpClient tcpClient;
 
-            
-
-            _tcpclient = await _tcplistener.AcceptTcpClientAsync();
-            _protocol = new Protocol(_tcpclient.GetStream());
-        }
-
-        public async Task StartReading()
-        {
-            await Task.Run(async () =>
+            try
             {
-                List<string> messages = null;
-                do
+                while (true)
                 {
-                    messages = await _protocol.ReadMessages();
-                    foreach (var message in messages)
-                    {
-                        Console.WriteLine($"Server [{_name}] message received: {message}");
-                    }
+                    tcpClient = await tcplistener.AcceptTcpClientAsync(_cancellationToken);
+                    await AcceptConnection(tcpClient, newConnectionCreated);
                 }
-                while (messages.Count > 0 && !messages.Contains("close connection"));
-            });
+            }
+            finally 
+            { 
+                tcplistener.Stop();
+            }
         }
 
-        public async Task StartSending()
+        public void Close()
         {
-            await Task.Run(async () =>
+            _cancellationTokenSource.Cancel();
+        }
+
+        private async Task AcceptConnection(TcpClient tcpClient, Func<Connection, Task> newConnectionCreated)
+        {
+            await Task.Yield();
+            try
             {
-                await SendMessage($"📅 This is current time now: {DateTime.Now}");
+                using (tcpClient)
+                using (var connection = new Connection($"{_name} connection", this, new Protocol(tcpClient.GetStream())))
+                {
+                    await newConnectionCreated(connection);
+                    await connection.RegisterMessageReceiver();
+                }
 
-                await SendMessage("Lets talk");
-
-                await SendMessage("Do you understand me?");
-
-                await SendMessage("What!?");
-
-                await SendMessage("Why do you?");
-
-                await SendMessage("close connection");
-            });
-        }
-
-        private async Task SendMessage(string message)
-        {
-            await _protocol.SendMessage(message);
-
-            Console.WriteLine($"Server [{_name}] message sent: {message}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
         }
     }
 }
