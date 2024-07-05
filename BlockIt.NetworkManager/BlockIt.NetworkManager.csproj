@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\BlockIt.NetworkCommunication\BlockIt.NetworkCommunication.csproj" />
     <ProjectReference Include="..\BlockIt.P2PNetwork\BlockIt.P2PNetwork.csproj" />
   </ItemGroup>
 

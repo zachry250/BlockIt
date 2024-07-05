@@ -1,16 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\BlockIt.Core\BlockIt.Core.csproj" />
-    <ProjectReference Include="..\BlockIt.NetworkManager\BlockIt.NetworkManager.csproj" />
-    <ProjectReference Include="..\BlockIt.NetworkNode\BlockIt.NetworkNode.csproj" />
     <ProjectReference Include="..\BlockIt.P2PNetwork\BlockIt.P2PNetwork.csproj" />
   </ItemGroup>
 

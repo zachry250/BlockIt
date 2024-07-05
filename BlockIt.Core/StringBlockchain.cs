@@ -10,6 +10,8 @@ namespace BlockIt.Core
     {
         private List<Block> _blocks;
 
+        public int Count => _blocks.Count;
+
         public StringBlockchain() 
         {
             _blocks = [new Block([], Encoding.UTF8.GetBytes("Genesis Block"))];

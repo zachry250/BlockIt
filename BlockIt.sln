@@ -11,7 +11,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlockIt.P2PNetwork", "Block
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlockIt.NetworkNode", "BlockIt.NetworkNode\BlockIt.NetworkNode.csproj", "{B2C43B18-3B2D-45BF-B223-1D8D3EEFB4CD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlockIt.NetworkManager", "BlockIt.NetworkManager\BlockIt.NetworkManager.csproj", "{F1BB8A63-099E-4589-9750-43410441DF1C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlockIt.NetworkManager", "BlockIt.NetworkManager\BlockIt.NetworkManager.csproj", "{F1BB8A63-099E-4589-9750-43410441DF1C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlockIt.NetworkCommunication", "BlockIt.NetworkCommunication\BlockIt.NetworkCommunication.csproj", "{80C58993-BE8E-4279-94C2-94E1CFF00C29}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +41,10 @@ Global
 		{F1BB8A63-099E-4589-9750-43410441DF1C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F1BB8A63-099E-4589-9750-43410441DF1C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F1BB8A63-099E-4589-9750-43410441DF1C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{80C58993-BE8E-4279-94C2-94E1CFF00C29}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{80C58993-BE8E-4279-94C2-94E1CFF00C29}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{80C58993-BE8E-4279-94C2-94E1CFF00C29}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{80C58993-BE8E-4279-94C2-94E1CFF00C29}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,4 +1,5 @@
 ﻿using BlockIt.Core;
+using BlockIt.NetworkManager;
 using BlockIt.NetworkNode;
 using BlockIt.P2PNetwork;
 using System.Net;
@@ -9,36 +10,50 @@ namespace BlockIt.Cmd
     {
         static void Main(string[] args)
         {
-            var cci = new ConnectionInfo(IPAddress.Parse("127.0.0.1"), 12345);
+            var manager = new Manager("Network Manager 1", new List<int> { 4042, 4043 });
+            manager.Start();
 
-            Console.WriteLine(cci);
+            var node1 = new Node("Node 1");
+            node1.ConnectToNetworkManager(new ConnectionInfo(IPAddress.Parse("127.0.0.1"), 4042));
 
+            var node2 = new Node("Node 2");
+            node2.ConnectToNetworkManager(new ConnectionInfo(IPAddress.Parse("127.0.0.1"), 4043));
 
-            int numberOfConnections = 1;
+            Thread.Sleep(3000);
+
+            manager.AddMessage("first testing block added! :)");
+            manager.AddMessage("add second, will be fun {}");
+            manager.ReturnBlocks().Wait();
+            Thread.Sleep(1000);
+            //manager.Stop();
+
+/*            int numberOfConnections = 2;
             List<Task> activeClients = new List<Task>();
             Server server;
-            List<Client> clients = new List<Client>();
+            //List<Client> clients = new List<Client>();
 
             server = new Server($"Server");
             _ = RunServer(server, 4240);
 
-            Thread.Sleep(3000);
+            //Thread.Sleep(3000);
             
             for (int i = 0; i < numberOfConnections; i++)
             {
                 Client client = new Client($"Client {i}");
-                clients.Add(client);
+                //clients.Add(client);
                 activeClients.Add(RunClient(client, 4240));
             }
             Task.WaitAll(activeClients.ToArray());
             server.Close();
+*/
 
-            var stringBlockchain = new StringBlockchain();
+            /*var stringBlockchain = new StringBlockchain();
             Console.WriteLine(stringBlockchain.PrintBlock(0));
             stringBlockchain.Add("first testing :) ");
             Console.WriteLine(stringBlockchain.PrintBlock(1));
             stringBlockchain.Add("second testing :) :) ");
             Console.WriteLine(stringBlockchain.PrintBlock(2));
+            */
         }
 
         private static async Task RunServer(Server server, int port)

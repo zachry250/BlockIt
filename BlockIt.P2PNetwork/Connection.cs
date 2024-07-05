@@ -68,7 +68,7 @@ namespace BlockIt.P2PNetwork
 
         public async Task SendMessage(string message)
         {
-            Console.WriteLine($"{_name} - {message}");
+            //Console.WriteLine($"{_name} - {message}");
             await _protocol.SendMessage(message);
         }
     }
