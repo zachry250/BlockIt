@@ -1,4 +1,5 @@
 ﻿using BlockIt.Core;
+using BlockIt.NetworkCommunication;
 using BlockIt.NetworkManager;
 using BlockIt.NetworkNode;
 using BlockIt.P2PNetwork;
@@ -10,21 +11,35 @@ namespace BlockIt.Cmd
     {
         static void Main(string[] args)
         {
-            var manager = new Manager("Network Manager 1", new List<int> { 4042, 4043 });
+            var manager = new Manager("Network Manager 1", new List<int> { 4042, 4043, 4044 });
             manager.Start();
 
-            var node1 = new Node("Node 1");
-            node1.ConnectToNetworkManager(new ConnectionInfo(IPAddress.Parse("127.0.0.1"), 4042));
+            var node1 = new Node(new NodeState("Node 1", new List<int> { 4142, 4143 }));
+            node1.ConnectTo(new ConnectionInfo("127.0.0.1", 4042));
 
-            var node2 = new Node("Node 2");
-            node2.ConnectToNetworkManager(new ConnectionInfo(IPAddress.Parse("127.0.0.1"), 4043));
+            var node2 = new Node(new NodeState("Node 2", new List<int> { 4242, 4243 }));
+            node2.ConnectTo(new ConnectionInfo("127.0.0.1", 4043));
 
-            Thread.Sleep(3000);
+            var node3 = new Node(new NodeState("Node 3", new List<int> { 4342, 4343 }));
+            node3.ConnectTo(new ConnectionInfo("127.0.0.1", 4044));
 
-            manager.AddMessage("first testing block added! :)");
-            manager.AddMessage("add second, will be fun {}");
+            Thread.Sleep(500);
+
+            manager.AddMessage("1 add testing block added! :)").Wait();
+            //Thread.Sleep(100);
+            manager.AddMessage("2 add, will be fun!").Wait();
+            //Thread.Sleep(100);
+            manager.AddMessage("3 add, will be even more fun!!!!").Wait();
+            //Thread.Sleep(100);
+            manager.AddMessage("4 how good will this work?").Wait();
+            //Thread.Sleep(100);
+            manager.AddMessage("5 I hope really good hehe.").Wait();
+            //Thread.Sleep(1000);
+            //Thread.Sleep(7000);
+            Thread.Sleep(500);
             manager.ReturnBlocks().Wait();
             Thread.Sleep(1000);
+            
             //manager.Stop();
 
 /*            int numberOfConnections = 2;

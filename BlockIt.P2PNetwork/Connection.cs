@@ -9,17 +9,23 @@ namespace BlockIt.P2PNetwork
     public class Connection : IDisposable
     {
         private readonly string _name;
+        private readonly int _port;
+        private readonly Guid _id;
         private readonly ITCPConnection _tcpConnection;
         private readonly Protocol _protocol;
         private Func<Connection, string, Task>? _messageListener;
+
+        public Guid Id => _id;
 
         public string Name { get { return _name; } }
 
         public bool IsServer { get { return _tcpConnection is Server; } }
 
-        public Connection(string name, ITCPConnection tcpConnection, Protocol protocol)
+        public Connection(string name, int port, ITCPConnection tcpConnection, Protocol protocol)
         {
             _name = name;
+            _port = port;
+            _id = Guid.NewGuid();
             _tcpConnection = tcpConnection;
             _protocol = protocol;
             _messageListener = null;
@@ -59,7 +65,6 @@ namespace BlockIt.P2PNetwork
 
         private async Task MessageReceived(string message)
         {
-            //Console.WriteLine($"{_name} - {message}");
             if ( _messageListener != null )
             {
                 await _messageListener(this, message);
@@ -68,7 +73,6 @@ namespace BlockIt.P2PNetwork
 
         public async Task SendMessage(string message)
         {
-            //Console.WriteLine($"{_name} - {message}");
             await _protocol.SendMessage(message);
         }
     }
