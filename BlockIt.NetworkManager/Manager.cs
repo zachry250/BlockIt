@@ -4,7 +4,7 @@ using System.Text.Json;
 
 namespace BlockIt.NetworkManager
 {
-    public class Manager
+    public class Manager : MessageVisitor
     {
         private readonly string? _name;
         private readonly Server _server;
@@ -61,19 +61,21 @@ namespace BlockIt.NetworkManager
 
         private async Task MessageListener(Connection connection, string message)
         {
-            if(message.IsCommand<GetBlocksResponse>())
-            {
-                var getBlocksResponse = message.Data<GetBlocksResponse>();
-                Console.WriteLine(getBlocksResponse);
-            }
-            else if (message.IsCommand<GetAvailableConnectionResponse>())
-            {
-                var input = message.Deserialize<GetAvailableConnectionResponse>();
-                var connectedConnection = _connectionManager.Connections.FirstOrDefault(x => x.Id == input.ConnectionIdToConnect);
-                var connectToNode = new ConnectToNode();
-                connectToNode.ConnectionInfo = input.ConnectionInfo;
-                connectedConnection.Send(connectToNode);
-            }
+            var messageInstance = message.Deserialize();
+            await messageInstance.RouteMessage(connection, this);
+        }
+
+        public override async Task ProcessMessage(Connection connection, GetBlocksResponse message)
+        {
+            Console.WriteLine(message.Response);
+        }
+
+        public override async Task ProcessMessage(Connection connection, GetAvailableConnectionResponse message)
+        {
+            var connectedConnection = _connectionManager.Connections.FirstOrDefault(x => x.Id == message.ConnectionIdToConnect);
+            var connectToNode = new ConnectToNode();
+            connectToNode.ConnectionInfo = message.ConnectionInfo;
+            connectedConnection.Send(connectToNode);
         }
 
         private async Task ClientConnected(Connection connection)

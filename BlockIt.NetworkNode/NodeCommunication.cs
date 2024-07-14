@@ -10,7 +10,7 @@ using System.Text.Json;
 
 namespace BlockIt.NetworkNode
 {
-    internal class NodeCommunication
+    internal class NodeCommunication : MessageVisitor
     {
         private NodeState _nodeState;
         private Func<ConnectionInfo, Task> _connectTo;
@@ -31,60 +31,61 @@ namespace BlockIt.NetworkNode
 
         public async Task Listener(Connection connection, string message)
         {
-            if (message.IsCommand<ConnectToNode>())
+            var messageInstance = message.Deserialize();
+            await messageInstance.RouteMessage(connection, this);
+        }
+
+        public override async Task ProcessMessage(Connection connection, AddMessage message)
+        {
+            lock (_lock)
             {
-                var connectToNode = message.Deserialize<ConnectToNode>();
-                var connectionInfo = connectToNode?.ConnectionInfo;
-                if (connectionInfo != null)
+                var newBlock = _nodeState.StringBlockchain.CreateBlock(message.Timestamp, message.Message);
+                if (!_nodeState.StringBlockchain.HasBlock(newBlock))
                 {
-                    _connectTo(connectionInfo);
-                    //Client client = new Client($"Network Node - {connectionInfo.GetIPAddress()}:{connectionInfo.Port}");
-                    //await client.Connect(connectionInfo.IPAddress, connectionInfo.Port, NewNetworkNodeConnected);
-                    //_networkNodeClients.Add(client);
+                    Console.WriteLine($"{_nodeState.Name} adds block {message.Message}");
+                    _nodeState.StringBlockchain.Add(newBlock);
+                    _ = Broadcast(message);
                 }
+                else
+                {
+                    Console.WriteLine($"{_nodeState.Name} has block {message.Message}");
+                }
+                _nodeState.StringBlockchain.Sort();
             }
-            else if (message.IsCommand<GetAvailableConnection>())
+        }
+
+        public override async Task ProcessMessage(Connection connection, GetBlocks message)
+        {
+            StringBuilder returnedBlocks = new StringBuilder();
+            returnedBlocks.AppendLine($"Node name: {_nodeState.Name}");
+            for (int i = 0; i < _nodeState.StringBlockchain.Count; i++)
             {
-                var port = _nodeState.GetFreeServerPort();
-                var input = message.Deserialize<GetAvailableConnection>();
-                if (port.HasValue && input != null)
-                {
-                    await _startServer(port.Value);
-                    var response = new GetAvailableConnectionResponse();
-                    response.ConnectionIdToConnect = input.ConnectionIdToConnect;
-                    response.ConnectionInfo = new ConnectionInfo("127.0.0.1", port.Value);
-                    await connection.Send(response);
-                }
+                returnedBlocks.Append(_nodeState.StringBlockchain.PrintBlock(i));
             }
-            else if (message.IsCommand<AddMessage>())
+            var response = new GetBlocksResponse();
+            response.Response = returnedBlocks.ToString();
+            await connection.Send(response);
+        }
+
+        public override async Task ProcessMessage(Connection connection, GetAvailableConnection message)
+        {
+            var port = _nodeState.GetFreeServerPort();
+            if (port.HasValue && message != null)
             {
-                lock (_lock)
-                {
-                    var addMessage = message.Deserialize<AddMessage>();
-                    var newBlock = _nodeState.StringBlockchain.CreateBlock(addMessage.Timestamp, addMessage.Message);
-                    if (!_nodeState.StringBlockchain.HasBlock(newBlock))
-                    {
-                        Console.WriteLine($"{_nodeState.Name} adds block {addMessage.Message}");
-                        _nodeState.StringBlockchain.Add(newBlock);
-                        _ = Broadcast(addMessage);
-                    }
-                    else
-                    {
-                        Console.WriteLine($"{_nodeState.Name} has block {addMessage.Message}");
-                        _nodeState.StringBlockchain.Sort();
-                    }
-                    
-                }
+                await _startServer(port.Value);
+                var response = new GetAvailableConnectionResponse();
+                response.ConnectionIdToConnect = message.ConnectionIdToConnect;
+                response.ConnectionInfo = new ConnectionInfo("127.0.0.1", port.Value);
+                await connection.Send(response);
             }
-            else if (message.IsCommand<GetBlocks>())
+        }
+
+        public override async Task ProcessMessage(Connection connection, ConnectToNode message)
+        {
+            var connectionInfo = message?.ConnectionInfo;
+            if (connectionInfo != null)
             {
-                StringBuilder returnedBlocks = new StringBuilder();
-                returnedBlocks.AppendLine($"Node name: {_nodeState.Name}");
-                for (int i = 0; i < _nodeState.StringBlockchain.Count; i++)
-                {
-                    returnedBlocks.Append(_nodeState.StringBlockchain.PrintBlock(i));
-                }
-                await connection.Send<GetBlocksResponse>(returnedBlocks.ToString());
+                _connectTo(connectionInfo);
             }
         }
 

@@ -42,29 +42,6 @@ namespace BlockIt.Core
             _blocks.Add(block);
         }
 
-        /*public void Sort(Block block)
-        {
-            int i = _blocks.Count - 1;
-            int count = 0;
-            bool reorder = false;
-            while (block.Timestamp < _blocks[i].Timestamp)
-            {
-                i--;
-                count++;
-                reorder = true;
-            }
-            printIfReorder(reorder);
-            var rearrangeBlocks = _blocks.GetRange(i, count);
-            _blocks.RemoveRange(i, count);
-
-            _blocks.Add(CreateBlock(block.Timestamp, block.Data));
-            foreach (var rearrangeBlock in rearrangeBlocks)
-            {
-                _blocks.Add(CreateBlock(rearrangeBlock.Timestamp, rearrangeBlock.Data));
-            }
-            printIfReorder(reorder);
-        }*/
-
         public void Sort() 
         {
             var sortedBlocks = new SortedList<long, Block>(_blocks.ToDictionary(x => x.Timestamp));
@@ -74,17 +51,6 @@ namespace BlockIt.Core
                 newBlocks.Add(CreateBlock(sortedblock.Value.Timestamp, sortedblock.Value.Data));
             }
             _blocks = newBlocks;
-        }
-
-
-        private void printIfReorder(bool reorder)
-        {
-            string print = "";
-            foreach(var block in _blocks)
-            {
-                print += $" --- {block}";
-            }
-            Console.WriteLine($"{print}");
         }
 
         public string PrintBlock(int index)
